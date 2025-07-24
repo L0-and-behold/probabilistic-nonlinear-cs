@@ -1,1 +1,1 @@
-# probabilistic-nonlinear-cs
+# Probabilistic and Nonlinear Compressive Sensing
