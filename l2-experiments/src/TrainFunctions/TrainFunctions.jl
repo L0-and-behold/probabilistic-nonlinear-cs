@@ -9,7 +9,7 @@ module TrainFunctions
 
 using Flux: gradient, params, update!, Chain
 
-include("../TrainArgs_Flux.jl")
+include("../TrainArgs.jl")
 using .TrainingArguments
 
 include("FineTuning.jl")
