@@ -1,0 +1,150 @@
+"""
+This script investigates the ℓ₂-distance evolution between student and teacher networks
+during training as a function of training steps (epochs). The experiment explores scaling
+behavior under two conditions:
+1. Setting initial_permut to zero (student exactly matches teacher) and training with noisy data
+2. Setting initial_permut to positive values and training with zero noise
+3. Combinations of both approaches
+"""
+
+
+"""
+Package Loading and Environment Setup
+
+Activates the current project environment and loads all necessary dependencies
+for neural network training, optimization, and visualization.
+"""
+
+using Pkg
+Pkg.activate(".")
+
+using ProgressMeter, Plots, Statistics
+using Flux: params, mse, Descent, cpu , gpu
+using Random: MersenneTwister
+
+include("src/Teacher_nn/Teacher_nn.jl")
+include("src/Metrics/Metrics.jl")
+include("src/TrainFunctions/TrainFunctions.jl")
+include("src/NonDegenerateProjection.jl")
+
+import .Teacher_nn: get_random_teacher, get_dataset
+import .Metrics: l2_distance
+import .TrainFunctions: vanilla_train!
+import .NonDegenerateProjection: project_onto_F
+
+# plotlyjs()
+gr()
+
+using Revise: includet
+includet("src/ExperimentHelpers.jl")
+using .ExperimentHelpers: normalize_and_average, do_plot
+
+"""
+Experiment Configuration Parameters
+
+This section defines all hyperparameters and settings for the student-teacher training experiment.
+Modify these values to explore different experimental conditions.
+
+See README.md for a description how to use each parameter.
+"""
+
+#######
+# Experiment Settings
+#######
+
+learning_rate = 1e-2
+noise_σ = 1e-3
+initial_permut = 0.0
+seed = 42
+epochs = 500
+num_runs = 10
+dataset_size = 10000
+test_set_size = 1000
+projection_frequency = 1 # epochs (0 means no projection)
+teacher_dimensions = [2, 25, 25, 1]
+
+"""
+Pre-allocation and Setup
+
+Initialize data structures and objects that remain constant across all experimental runs.
+This includes the optimizer configuration and result storage arrays.
+"""
+
+title = "lr="*string(learning_rate)*", σ="*string(noise_σ)*", initial_permut="*string(initial_permut)*", epochs="*string(epochs)*", num_runs="*string(num_runs)*", seed="*string(seed)
+opt = Descent(learning_rate)
+l2 = zeros(Float32, epochs, num_runs)
+train_loss = zeros(Float32, epochs, num_runs)
+test_loss = zeros(Float32, epochs, num_runs)
+
+"""
+Main Training Loop
+
+Executes the core experimental procedure across multiple independent runs.
+Each run involves:
+1. Generating a random teacher network and corresponding datasets
+2. Initializing a student network (copy of teacher + optional perturbation)
+3. Training the student network while tracking metrics
+4. Optional projection onto constraint manifolds
+
+The loop is parallelized across runs for computational efficiency.
+"""
+
+@showprogress Threads.@threads for i in 1:num_runs
+    current_seed = seed + i
+    rng = MersenneTwister(current_seed)
+
+    teacher_model = get_random_teacher(teacher_dimensions..., device=cpu, rng=rng)
+    if project_onto_F == 0
+        continue
+    else
+        teacher_model = project_onto_F(teacher_model; device=cpu)
+    end
+
+    train_set = get_dataset(teacher_model, dataset_size, dataset_size; noise_σ=noise_σ, device=cpu, rng=rng)
+    test_set = get_dataset(teacher_model, test_set_size, test_set_size; noise_σ=noise_σ, device=cpu, rng=rng)
+
+    student = deepcopy(teacher_model)
+    for p in params(student)
+        p .+= initial_permut * randn(rng, size(p))
+    end
+
+    l2_distance(student, teacher_model)
+
+    loss(x, y) = mse(student(x), y)
+
+    for epoch in 1:epochs
+        vanilla_train!(loss, student, train_set, opt)
+
+        if projection_frequency == 0
+            continue
+        elseif projection_frequency%epoch == 0
+            student = project_onto_F(student; device=cpu)
+        end
+
+        l2[epoch, i] = l2_distance(student, teacher_model)
+        train_loss[epoch, i] = mean(loss(x, y) for (x, y) in train_set)
+        test_loss[epoch, i] = mean(loss(x, y) for (x, y) in test_set)
+    end
+end
+
+"""
+Data Analysis and Visualization
+
+Process the collected data across all runs to compute statistical averages
+and generate comprehensive plots showing the evolution of key metrics.
+"""
+
+l2_avg = normalize_and_average(l2)
+train_loss_avg = normalize_and_average(train_loss)
+test_loss_avg = normalize_and_average(test_loss)
+
+do_plot(l2_avg, train_loss_avg, test_loss_avg, title)
+
+"""
+Results
+
+Save the generated plots to file with descriptive filename containing
+all relevant experimental parameters for easy identification and comparison.
+"""
+
+savefig(title*".svg")
