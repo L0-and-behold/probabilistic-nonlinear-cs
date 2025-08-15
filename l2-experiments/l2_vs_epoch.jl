@@ -60,7 +60,7 @@ epochs = 500
 num_runs = 10
 dataset_size = 10000
 test_set_size = 1000
-projection_frequency = 1 # epochs (0 means no projection)
+projection_frequency = 0 # epochs (0 means no projection)
 teacher_dimensions = [2, 25, 25, 1]
 
 """
@@ -70,7 +70,7 @@ Initialize data structures and objects that remain constant across all experimen
 This includes the optimizer configuration and result storage arrays.
 """
 
-title = "lr="*string(learning_rate)*", σ="*string(noise_σ)*", initial_permut="*string(initial_permut)*", epochs="*string(epochs)*", num_runs="*string(num_runs)*", seed="*string(seed)
+title = "ℓ₂_epoch - lr="*string(learning_rate)*", σ="*string(noise_σ)*", initial_permut="*string(initial_permut)*", epochs="*string(epochs)*", num_runs="*string(num_runs)*", seed="*string(seed)
 opt = Descent(learning_rate)
 l2 = zeros(Float32, epochs, num_runs)
 train_loss = zeros(Float32, epochs, num_runs)
@@ -93,35 +93,31 @@ The loop is parallelized across runs for computational efficiency.
     current_seed = seed + i
     rng = MersenneTwister(current_seed)
 
-    teacher_model = get_random_teacher(teacher_dimensions..., device=cpu, rng=rng)
-    if project_onto_F == 0
-        continue
-    else
-        teacher_model = project_onto_F(teacher_model; device=cpu)
+    teacher = get_random_teacher(teacher_dimensions..., device=cpu, rng=rng)
+    if projection_frequency != 0
+        teacher = project_onto_F(teacher; device=cpu)
     end
 
-    train_set = get_dataset(teacher_model, dataset_size, dataset_size; noise_σ=noise_σ, device=cpu, rng=rng)
-    test_set = get_dataset(teacher_model, test_set_size, test_set_size; noise_σ=noise_σ, device=cpu, rng=rng)
+    train_set = get_dataset(teacher, dataset_size, dataset_size; noise_σ=noise_σ, device=cpu, rng=rng)
+    test_set = get_dataset(teacher, test_set_size, test_set_size; noise_σ=noise_σ, device=cpu, rng=rng)
 
-    student = deepcopy(teacher_model)
+    student = deepcopy(teacher)
     for p in params(student)
         p .+= initial_permut * randn(rng, size(p))
     end
 
-    l2_distance(student, teacher_model)
+    l2_distance(student, teacher)
 
     loss(x, y) = mse(student(x), y)
 
     for epoch in 1:epochs
         vanilla_train!(loss, student, train_set, opt)
 
-        if projection_frequency == 0
-            continue
-        elseif projection_frequency%epoch == 0
+        if projection_frequency != 0 && projection_frequency%epoch == 0
             student = project_onto_F(student; device=cpu)
         end
 
-        l2[epoch, i] = l2_distance(student, teacher_model)
+        l2[epoch, i] = l2_distance(student, teacher)
         train_loss[epoch, i] = mean(loss(x, y) for (x, y) in train_set)
         test_loss[epoch, i] = mean(loss(x, y) for (x, y) in test_set)
     end
