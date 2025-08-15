@@ -12,9 +12,13 @@ Despite theoretical guarantees suggesting networks should only differ by known s
 
 Our experiments reveal three phenomena:  
 
-1. __Perturbation Recovery__: Student networks initialized with small perturbations of teacher parameters initially approach the teacher but then diverge significantly during training.  
-2. __Noisy Dataset Learning__: Students initialized exactly as teachers but trained on noisy data show monotonic parameter divergence.  
-3. __Noise Sensitivity__: Nearly linear relationship (log-log scale) between dataset noise and final parameter distance.  
+- **A: Perturbation Recovery** - Student initialized with small parameter perturbations
+- **B: Noisy Dataset Learning** - Student initialized exactly as teacher, trained on noisy data  
+- **C: Noise Sensitivity Analysis** - Relationship between noise level and parameter divergence
+
+| Experiment A | Experiment B | Experiment C |
+|--------------|--------------|---------------|
+| <img src="attachments/expA.svg" width="200px"> | <img src="attachments/expB.svg" width="200px"> | <img src="attachments/expC.svg" width="200px"> |
 
 ## Experimental Setup  
 
