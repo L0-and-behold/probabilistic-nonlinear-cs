@@ -5,7 +5,7 @@ using Dates
 using JSON
 using DataStructures
 
-include("../../TrainingTools/TrainingTools.jl")
+include("../TrainingTools/TrainingTools.jl")
 using .TrainingTools: accuracy
 
 export number_of_small_weights, 

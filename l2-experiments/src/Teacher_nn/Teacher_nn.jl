@@ -15,7 +15,6 @@ module Teacher_nn
 
     using .ByteSizeCompression: byte_size_compression, true_byte_size
     using .TrainingTools
-    using .AlphaScaling
     import .TrainFunctions
     import .NonDegenerateProjection: project_onto_F
 

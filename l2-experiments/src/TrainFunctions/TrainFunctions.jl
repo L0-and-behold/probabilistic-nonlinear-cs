@@ -8,6 +8,7 @@ as described in https://arxiv.org/abs/2109.05075v3.
 module TrainFunctions
 
 using Flux: gradient, params, update!, Chain
+using Flux
 
 include("../TrainArgs.jl")
 using .TrainingArguments
