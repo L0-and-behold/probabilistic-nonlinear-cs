@@ -8,7 +8,7 @@ binary masking operations on neural network parameters.
 1. Initialize a binary mask with `initialize_mask`
 2. Perform global magnitude pruning with `update_mask!`
 3. Apply mask during training with `apply_mask!` to freeze pruned parameters at zero
-4. Use with `TrainFunctions.l0l2_train_FT!` or `TrainFunctions.NORM_train_FT!`
+4. Use with `TrainFunctions.l0l2_train_FT!` or `TrainFunctions.DRR_train_FT!`
 
 # Exports
 - `initialize_mask`: Create initial binary mask for model parameters

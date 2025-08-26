@@ -12,9 +12,9 @@ Despite theoretical guarantees suggesting networks should only differ by known s
 
 Our experiments reveal three phenomena:  
 
-- **A: Perturbation Recovery** - Student initialized with small parameter perturbations
-- **B: Noisy Dataset Learning** - Student initialized exactly as teacher, trained on noisy data  
-- **C: Noise Sensitivity Analysis** - Relationship between noise level and parameter divergence
+- __A: Perturbation Recovery__ - Student initialized with small parameter perturbations
+- __B: Noisy Dataset Learning__ - Student initialized exactly as teacher, trained on noisy data  
+- __C: Noise Sensitivity Analysis__ - Relationship between noise level and parameter divergence
 
 | Experiment A | Experiment B | Experiment C |
 |--------------|--------------|---------------|
@@ -60,7 +60,18 @@ The repository supports the following experiments:
 | `test_set_size`         | `1000`             | Test dataset size |
 | `projection_frequency`  | `1`                | Projection onto manifold ℱ frequency |
 | `teacher_dimensions`    | `[2, 25, 25, 1]`   | Network architecture `[input, hidden, hidden, output]` |
+| `train_function!`       | `vanilla_train!`   | Training algorithm: `vanilla_train!`, `l1_train!`, or `DRR_train!` |
 
+
+### Training Algorithm Options
+
+The experiments support multiple training algorithms via the `train_function!` parameter:
+
+| Training Function | Description | Key Parameters |
+|-------------------|-------------|----------------|
+| `vanilla_train!` | Standard gradient descent | None |
+| `l1_train!` | L1-regularized training | `args.α` (ℓ₁-regularization strength) |
+| `DRR_train!` | L0-regularized training (Differentiable Relexation of ℓ₀-regularization, see https://arxiv.org/abs/2505.17469)  | `args.α` (ℓ₀-regularization strength), `args.β` (DRR-parameter), `args.ρ` (ℓ₂-regularization strength) |
 
 ### Parameter Details  
 
@@ -77,6 +88,13 @@ __Dataset Noise__:
 y_noisy = y_teacher + ε
 ```
 where `ε ~ N(0, noise_σ²)`
+
+__Training Algorithm Selection__:
+```julia
+train_function! = vanilla_train!  # or l1_train!, DRR_train!
+args = TrainArgs()
+args.α = 0.0001  # regularization strength
+```
 
 __Projection Frequency__:
 
@@ -136,4 +154,4 @@ __For `l2_vs_noise_level.jl`__
 
 ### File Output
 
-Results are saved as SVG files with descriptive filenames containing all experimental parameters:
+Results are saved as SVG files with descriptive filenames containing all experimental parameters.
