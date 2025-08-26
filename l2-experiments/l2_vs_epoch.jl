@@ -26,14 +26,15 @@ include("src/Teacher_nn/Teacher_nn.jl")
 include("src/Metrics/Metrics.jl")
 include("src/TrainFunctions/TrainFunctions.jl")
 include("src/NonDegenerateProjection.jl")
+include("src/TrainArgs.jl")
 
 import .Teacher_nn: get_random_teacher, get_dataset
 import .Metrics: l2_distance
-import .TrainFunctions: vanilla_train!
+import .TrainFunctions: vanilla_train!, DRR_train!, l1_train!
 import .NonDegenerateProjection: project_onto_F
+import .TrainingArguments: TrainArgs
 
-# plotlyjs()
-gr()
+gr() # change plot backend if desired
 
 using Revise: includet
 includet("src/ExperimentHelpers.jl")
@@ -51,6 +52,7 @@ See README.md for a description how to use each parameter.
 #######
 # Experiment Settings
 #######
+args = TrainArgs()
 
 learning_rate = 1e-2
 noise_σ = 1e-3
@@ -63,6 +65,11 @@ test_set_size = 1000
 projection_frequency = 0 # epochs (0 means no projection)
 teacher_dimensions = [2, 25, 25, 1]
 
+opt = Descent(learning_rate) #Optimizer
+
+train_function! = DRR_train! # vanilla_train!, l1_train!, or DRR_train!
+args.α = 0.0001 # ℓ₀- or ℓ₁-regularization strength
+
 """
 Pre-allocation and Setup
 
@@ -71,7 +78,7 @@ This includes the optimizer configuration and result storage arrays.
 """
 
 title = "ℓ₂_epoch - lr="*string(learning_rate)*", σ="*string(noise_σ)*", initial_permut="*string(initial_permut)*", epochs="*string(epochs)*", num_runs="*string(num_runs)*", seed="*string(seed)
-opt = Descent(learning_rate)
+
 l2 = zeros(Float32, epochs, num_runs)
 train_loss = zeros(Float32, epochs, num_runs)
 test_loss = zeros(Float32, epochs, num_runs)
@@ -111,7 +118,12 @@ The loop is parallelized across runs for computational efficiency.
     loss(x, y) = mse(student(x), y)
 
     for epoch in 1:epochs
-        vanilla_train!(loss, student, train_set, opt)
+
+        if train_function! == vanilla_train!
+            vanilla_train!(loss, student, train_set, opt)
+        else
+            train_function!(loss, student, train_set, opt, args)
+        end
 
         if projection_frequency != 0 && projection_frequency%epoch == 0
             student = project_onto_F(student; device=cpu)

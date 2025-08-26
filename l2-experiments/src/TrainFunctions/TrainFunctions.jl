@@ -19,26 +19,17 @@ export initialize_mask,
     update_mask!, 
     apply_mask!
 
-include("L0L2.jl")
-using .L0L2
-export l0_train_FT!, 
-    l0l2_train_FT!, 
-    l0l2_train!, 
-    l0_train!,
-    l0l2_regularizer_term, 
-    l0_regularizer_term
-
 include("L1.jl")
 using .L1
 export l1_train_FT!,
     l1_train!,
     l1_regularizer_term
 
-include("NORM.jl")
-using .NORM
-export NORM_train_FT!, 
-    NORM_train!,
-    NORM_regularizing_terms, 
+include("DRR.jl")
+using .DRR
+export DRR_train_FT!, 
+    DRR_train!,
+    DRR_regularizing_terms, 
     scalarwise_product, 
     scalarwise_addition, 
     vector_of_tensors, 

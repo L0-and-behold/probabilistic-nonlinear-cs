@@ -33,13 +33,15 @@ include("src/Teacher_nn/Teacher_nn.jl")
 include("src/Metrics/Metrics.jl")
 include("src/TrainFunctions/TrainFunctions.jl")
 include("src/NonDegenerateProjection.jl")
+include("src/TrainArgs.jl")
 
 import .Teacher_nn: get_random_teacher, get_dataset
 import .Metrics: l2_distance
-import .TrainFunctions: vanilla_train!
+import .TrainFunctions: vanilla_train!, l1_train!, DRR_train!
 import .NonDegenerateProjection: project_onto_F
+import .TrainingArguments: TrainArgs
 
-gr() # Change backend if desired
+gr() # change plot backend if desired
 
 """
 Experiment Configuration Parameters
@@ -51,22 +53,25 @@ Adjust these values to reproduce different conditions.
 #######
 # Experiment Settings
 #######
+args = TrainArgs()
 
 # Noise levels (logarithmic sweep)
 σ_levels = [1e-5 * 1.615^i for i in 0:24]
 
 # Training hyperparameters
-learning_rate = 1e-5
+learning_rate = 1e-3
 initial_permut = 0.0      # Initial perturbation magnitude
 seed = 42
-epochs = 500
+epochs = 100
 num_runs = 10             # Independent runs per noise level
 dataset_size = 10000
 projection_frequency = 0 # epochs (0 means no projection)
 teacher_dimensions = [2, 25, 25, 1]
 
-# Optimizer
-opt = Descent(learning_rate)
+opt = Descent(learning_rate) # Optimizer
+
+train_function! = vanilla_train! # vanilla_train!, l1_train!, or DRR_train!
+args.α = 0.0001 # ℓ₀- or ℓ₁-regularization strength
 
 """
 Pre-allocation and Teacher Initialization
@@ -112,7 +117,11 @@ Iterates over noise levels and independent runs. For each combination:
 
     # Training
     for epoch in 1:epochs
-        vanilla_train!(loss, student, train_set, opt)
+        if train_function! == vanilla_train!
+            vanilla_train!(loss, student, train_set, opt)
+        else
+            train_function!(loss, student, train_set, opt, args)
+        end
 
         if projection_frequency != 0 && projection_frequency%epoch == 0
             student = project_onto_F(student; device=cpu)
@@ -151,7 +160,7 @@ p = plot(
 
 # Tick formatting
 xticks!(p, [10.0^-i for i in 0:2:6])
-yticks!(p, [10.0^-i for i in 0:2:20])
+yticks!(p, [10.0^-i for i in -5:2:30])
 
 # Save figure
 savefig(title*".svg")

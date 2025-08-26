@@ -91,7 +91,7 @@ Base.@kwdef mutable struct TrainArgs{T<:Union{Float32,Float64}} <: AbstractTrain
     #l0l2, FT parameters
     α::T = 1.0 
     β::T = 10.0
-    ρ::T = 0.01
+    ρ::T = 0.0
     ϵ::T = 0.02
     N::Int = 2
     smoothing_window::Int = 100
