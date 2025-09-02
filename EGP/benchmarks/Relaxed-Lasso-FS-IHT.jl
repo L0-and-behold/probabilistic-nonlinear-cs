@@ -1,6 +1,6 @@
 using RCall
 
-# In order for the following to work, you must have run `install_R_libraries.sh` which does the following, which you can also do manually: It uses miniforge3 conda (or another conda version in which case you have to change the "miniforge3" path below) to create a conda environment called R, and in that environment installs the r-base package and the r-devtools package. Then it opens R in that environment and installs the bestsubset package from this repo https://github.com/ryantibs/best-subset, using the following commands (in R console)
+# In order for the following to work, you must have run `install_R_libraries.sh` which does the following, which you can also do manually: It uses miniconda3 conda (or another conda version in which case you have to change the "miniconda3" path below, for example miniforge3) to create a conda environment called R, and in that environment installs the r-base package and the r-devtools package. Then it opens R in that environment and installs the bestsubset package from this repo https://github.com/ryantibs/best-subset, using the following commands (in R console)
 #  library(devtools)
 #  install_github(repo="ryantibs/best-subset", subdir="bestsubset")
 
