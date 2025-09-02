@@ -1,3 +1,5 @@
 .vscode
 Manifest.toml
 *.svg
+EGP/benchmarks/results/
+EGP/benchmarks/comparison-with-MonteCarlo-methods/results/
