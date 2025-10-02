@@ -32,7 +32,17 @@ Each experimental directory is designed to be used as an independent root for ru
 
 If you use this code in your research, please cite:
 
-_(Coming Soon)_
+```bibtex
+@misc{barth2025probabilistic_and_nonlinear_compressive_sensing,
+      title={Probabilistic and nonlinear compressive sensing}, 
+      author={Lukas Silvester Barth and Paulo {von Petersenn}},
+      year={2025},
+      eprint={2509.15060},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2509.15060}, 
+}
+```
 
 ## License
 
